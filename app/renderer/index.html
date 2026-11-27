@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' media: data: blob:; media-src 'self' media: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' media:; font-src 'self'">
+<title>WhatStick</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="titlebar">
+  <img class="logo" src="../icon/icon.svg" alt="">
+  <span class="brand">WhatStick</span>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Secciones">
+    <button class="rail-btn active" data-view="create" data-icon="plus">Crear</button>
+    <button class="rail-btn" data-view="library" data-icon="library">Biblioteca</button>
+    <button class="rail-btn" data-view="settings" data-icon="settings">Ajustes</button>
+  </nav>
+
+  <main>
+    <!-- ======================= CREAR ======================= -->
+    <section class="view active" id="view-create">
+      <div class="create-wrap">
+        <div class="drop" id="drop" tabindex="0">
+          <div class="drop-art" data-icon="sticker"></div>
+          <h1>Crea un sticker</h1>
+          <p>Arrastra imágenes, vídeos o GIF, o pega una imagen con <kbd>Ctrl</kbd> + <kbd>V</kbd></p>
+          <div class="drop-actions">
+            <button class="btn primary" id="btn-open" data-icon="folder-open">Elegir archivos</button>
+            <button class="btn" id="btn-paste" data-icon="clipboard-paste">Pegar</button>
+          </div>
+          <form class="url" id="url-form">
+            <span class="url-ico" data-icon="link"></span>
+            <input id="url-input" type="url" placeholder="Pega un enlace de vídeo o de MyInstants" spellcheck="false">
+            <button class="btn small" type="submit">Importar</button>
+          </form>
+          <p class="hint">Formatos: MP4, MKV, MOV, WebM, GIF, PNG, JPG y WebP. Descarga solo contenido que tengas permiso para usar.</p>
+        </div>
+        <div class="recent" id="imports" hidden>
+          <h2>Archivos importados</h2>
+          <div class="import-list" id="import-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= EDITOR ======================= -->
+    <section class="view" id="view-editor">
+      <div class="ed-top">
+        <button class="icon-btn" id="ed-back" data-icon="chevron-left" title="Volver"></button>
+        <input class="ed-name" id="ed-name" value="Sticker" spellcheck="false" aria-label="Nombre del sticker">
+        <div class="seg" id="type-seg" role="tablist" aria-label="Tipo de sticker">
+          <button data-type="static" data-icon="image" title="Sticker estático"><span class="lbl">Estático</span></button>
+          <button data-type="animated" data-icon="film" title="Sticker animado sin sonido"><span class="lbl">Animado</span></button>
+          <button data-type="sound" data-icon="volume-2" title="Sticker animado con sonido"><span class="lbl">Con sonido</span></button>
+        </div>
+        <div class="spacer"></div>
+        <button class="icon-btn" id="undo" data-icon="undo-2" title="Deshacer (Ctrl+Z)"></button>
+        <button class="icon-btn" id="redo" data-icon="redo-2" title="Rehacer (Ctrl+Y)"></button>
+        <button class="icon-btn" id="reset-all" data-icon="refresh-ccw" title="Restablecer toda la edición"></button>
+        <div class="size-badge" id="size-badge" title="Peso del sticker generado"></div>
+        <button class="btn" id="btn-save" data-icon="save" title="Guardar en la biblioteca"><span class="lbl">Guardar</span></button>
+        <button class="btn" id="btn-export" data-icon="download" title="Exportar a un archivo"><span class="lbl">Exportar</span></button>
+        <button class="btn primary" id="btn-send" data-icon="send" title="Enviar a tu chat de WhatsApp"><span class="lbl">Enviar a WhatsApp</span></button>
+      </div>
+
+      <div class="ed-body">
+        <div class="tools" id="tools" role="toolbar" aria-label="Herramientas">
+          <button class="tool active" data-tool="crop" data-icon="crop" title="Encuadre"><span>Encuadre</span></button>
+          <button class="tool" data-tool="adjust" data-icon="sliders-horizontal" title="Ajustes"><span>Ajustes</span></button>
+          <button class="tool" data-tool="text" data-icon="type" title="Texto"><span>Texto</span></button>
+          <button class="tool" data-tool="background" data-icon="paint-bucket" title="Fondo"><span>Fondo</span></button>
+          <button class="tool" data-tool="audio" data-icon="music" title="Audio"><span>Audio</span></button>
+        </div>
+
+        <div class="stage-wrap">
+          <div class="stage-mode seg small" id="stage-mode">
+            <button data-mode="edit" class="active">Edición</button>
+            <button data-mode="result">Resultado</button>
+          </div>
+          <div class="stage" id="stage">
+            <div class="viewport" id="viewport">
+              <div class="frame" id="frame">
+                <div class="media-box" id="media-box"></div>
+                <canvas class="text-layer" id="text-layer" width="512" height="512"></canvas>
+                <div class="crop" id="crop">
+                  <div class="crop-grid"></div>
+                  <i class="h nw"></i><i class="h ne"></i><i class="h sw"></i><i class="h se"></i>
+                  <i class="e n"></i><i class="e s"></i><i class="e w"></i><i class="e e"></i>
+                </div>
+              </div>
+            </div>
+            <div class="result" id="result" hidden>
+              <div class="checker"><img id="result-img" alt="Sticker generado"></div>
+              <div class="result-info" id="result-info"></div>
+              <button class="btn small" id="result-play" data-icon="play">Reproducir con sonido</button>
+            </div>
+            <div class="stage-busy" id="stage-busy" hidden><span class="spin" data-icon="loader-circle"></span><span id="stage-busy-text">Cargando…</span></div>
+          </div>
+          <div class="zoom-ctl">
+            <button class="icon-btn small" id="zoom-out" data-icon="zoom-out" title="Alejar"></button>
+            <span id="zoom-label">100 %</span>
+            <button class="icon-btn small" id="zoom-in" data-icon="zoom-in" title="Acercar"></button>
+            <button class="icon-btn small" id="zoom-fit" data-icon="maximize" title="Ajustar a la ventana"></button>
+          </div>
+        </div>
+
+        <aside class="panel" id="panel"></aside>
+      </div>
+
+      <div class="timeline" id="timeline">
+        <div class="tl-controls">
+          <button class="icon-btn" id="tl-prev" data-icon="chevron-left" title="Fotograma anterior (←)"></button>
+          <button class="icon-btn play" id="tl-play" data-icon="play" title="Reproducir (Espacio)"></button>
+          <button class="icon-btn" id="tl-next" data-icon="chevron-right" title="Fotograma siguiente (→)"></button>
+          <button class="icon-btn toggle on" id="tl-loop" data-icon="repeat" title="Repetir el fragmento"></button>
+          <span class="tl-time" id="tl-time">0:00.000</span>
+          <div class="spacer"></div>
+          <label class="tl-field">Inicio <input id="tl-start" class="time-input" spellcheck="false"></label>
+          <label class="tl-field">Fin <input id="tl-end" class="time-input" spellcheck="false"></label>
+          <span class="tl-dur" id="tl-dur"></span>
+          <label class="tl-field">Velocidad
+            <select id="tl-speed"><option value="0.5">0,5×</option><option value="0.75">0,75×</option><option value="1" selected>1×</option><option value="1.25">1,25×</option><option value="1.5">1,5×</option><option value="2">2×</option><option value="3">3×</option></select>
+          </label>
+          <button class="btn small" id="tl-frame" data-icon="camera" title="Usar el fotograma actual para el sticker estático">Usar este fotograma</button>
+        </div>
+        <div class="tl-track" id="tl-track">
+          <div class="tl-thumbs" id="tl-thumbs"></div>
+          <canvas class="tl-wave" id="tl-wave"></canvas>
+          <div class="tl-shade left" id="tl-shade-l"></div>
+          <div class="tl-shade right" id="tl-shade-r"></div>
+          <div class="tl-sel" id="tl-sel"><i class="tl-h start"></i><i class="tl-h end"></i></div>
+          <div class="tl-frame-mark" id="tl-frame-mark" title="Fotograma del sticker estático"></div>
+          <div class="tl-head" id="tl-head"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= BIBLIOTECA ======================= -->
+    <section class="view" id="view-library">
+      <div class="lib-top">
+        <h1>Biblioteca</h1>
+        <div class="search"><span data-icon="search"></span><input id="lib-search" type="search" placeholder="Buscar por nombre" spellcheck="false"></div>
+        <div class="seg small" id="lib-filter">
+          <button data-f="all" class="active">Todos</button><button data-f="static">Estáticos</button><button data-f="animated">Animados</button><button data-f="sound">Con sonido</button><button data-f="fav" data-icon="star">Favoritos</button>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn small" id="lib-folder" data-icon="folder-open">Abrir carpeta</button>
+      </div>
+      <div class="lib-grid" id="lib-grid"></div>
+      <div class="placeholder" id="lib-empty" hidden><div data-icon="library"></div><h2>Aún no hay stickers</h2><p>Crea uno y pulsa «Guardar» para tenerlo aquí.</p></div>
+    </section>
+
+    <!-- ======================= AJUSTES ======================= -->
+    <section class="view" id="view-settings">
+      <div class="settings">
+        <h1>Ajustes</h1>
+
+        <div class="card" id="wa-card">
+          <div class="card-head"><span class="card-ico" data-icon="smartphone"></span><div><h2>WhatsApp</h2><p class="note">WhatStick se vincula como un dispositivo más de tu cuenta y envía los stickers a tu chat contigo mismo («Tú»).</p></div></div>
+          <div class="wa-state" id="wa-state"></div>
+          <div class="wa-qr" id="wa-qr" hidden><img id="wa-qr-img" alt="Código QR de vinculación"><ol><li>Abre WhatsApp en el móvil.</li><li>Ve a <b>Dispositivos vinculados</b> → <b>Vincular un dispositivo</b>.</li><li>Escanea este código.</li></ol></div>
+          <div class="row left" id="wa-actions"></div>
+          <label class="check"><input type="checkbox" id="set-connect"> Mantener conectado mientras WhatStick está abierto</label>
+          <p class="note">Desactivado (recomendado): WhatStick solo se conecta a WhatsApp al enviar un sticker y se desconecta a los 3 minutos. La sesión se guarda cifrada con tu usuario de Windows y los mensajes de otros chats se descartan sin leerlos.</p>
+          <p class="note warn-box"><b>Integración no oficial.</b> Usa <a href="https://github.com/WhiskeySockets/Baileys" target="_blank">Baileys</a>, una implementación libre del protocolo de WhatsApp Web, y puede dejar de funcionar si WhatsApp lo cambia; el editor y la exportación seguirán funcionando. La sesión de este dispositivo solo se guarda en tu PC y puedes cerrarla en cualquier momento desde el móvil. WhatStick no envía nada sin tu confirmación y solo a tu propio chat.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-ico" data-icon="folder-open"></span><div><h2>Almacenamiento</h2><p class="note">Carpeta donde se guardan los stickers de la biblioteca, con su proyecto para volver a editarlos.</p></div></div>
+          <div class="field"><input type="text" id="set-dir" readonly><button class="btn small" id="set-dir-btn">Cambiar…</button><button class="icon-btn small" id="set-dir-open" data-icon="external-link" title="Abrir carpeta"></button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-ico" data-icon="sticker"></span><div><h2>Stickers</h2></div></div>
+          <div class="field"><span class="note" style="width:140px">Nombre del paquete</span><input type="text" id="set-pack" maxlength="40" spellcheck="false"></div>
+          <div class="field"><span class="note" style="width:140px">Autor</span><input type="text" id="set-author" maxlength="40" spellcheck="false" placeholder="(opcional)"></div>
+          <p class="note">En WhatsApp se verá debajo del sticker así: <b id="pack-preview"></b>. Se aplica a los stickers que crees a partir de ahora.</p>
+          <label class="check"><input type="checkbox" id="set-large"> Permitir stickers de hasta 1 MB (más calidad, no oficial)</label>
+          <p class="note">Por defecto se respetan los límites oficiales: 100 KB los estáticos y 500 KB los animados. El servidor de WhatsApp acepta hasta 1 MB, pero algunos móviles podrían no mostrarlos.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><span class="card-ico" data-icon="link"></span><div><h2>Importar desde enlaces</h2><p class="note">Los vídeos se descargan con <a href="https://github.com/yt-dlp/yt-dlp" target="_blank">yt-dlp</a>. Descarga solo contenido que tengas permiso para usar.</p></div></div>
+          <div class="row left" id="ytdlp-row"></div>
+        </div>
+
+        <p class="note about">WhatStick <span id="app-version"></span> · Hecho por <b>Dreex</b> · Procesamiento 100 % local, sin anuncios ni telemetría.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="modal-back" id="modal" hidden><div class="modal" id="modal-box"></div></div>
+<audio id="aux-audio" preload="auto"></audio>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
