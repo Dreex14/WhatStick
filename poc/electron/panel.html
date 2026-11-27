@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>WhatStick · Prueba de concepto</title>
+<style>
+  body { font: 14px/1.45 "Segoe UI Variable", "Segoe UI", sans-serif; background: #121418; color: #e6e8eb; margin: 0; padding: 22px; }
+  h1 { font-size: 18px; margin: 0 0 4px; } p { color: #9aa3ad; margin: 0 0 16px; }
+  section { background: #1b1e24; border: 1px solid #2a2f37; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #8b95a1; margin: 0 0 10px; }
+  button { background: #2a2f37; color: #e6e8eb; border: 0; border-radius: 8px; padding: 8px 12px; margin: 0 6px 6px 0; cursor: pointer; font: inherit; }
+  button:hover { background: #343a44; } button.p { background: #1f8f5f; } button.p:hover { background: #24a56e; }
+  pre { background: #0d0f12; border-radius: 8px; padding: 10px; white-space: pre-wrap; font: 12px Consolas, monospace; max-height: 190px; overflow: auto; margin: 6px 0 0; }
+  label { color: #b5bdc6; font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Prueba de concepto</h1>
+<p>Genera los tres tipos de sticker y envíalos a tu chat personal de WhatsApp Web.</p>
+<section>
+  <h2>1 · Conexión</h2>
+  <label><input type="radio" name="via" value="web" checked> A · WhatsApp Web integrado</label><br>
+  <button class="p" id="open">Abrir WhatsApp Web</button><button id="st">Comprobar estado</button><br>
+  <label><input type="radio" name="via" value="baileys"> B · Dispositivo vinculado (Baileys)</label><br>
+  <button class="p" id="bl">Vincular / conectar</button><button id="blst">Comprobar estado</button><button id="blout">Desvincular</button>
+  <img id="qr" alt="" style="display:none;margin-top:8px;border-radius:8px;background:#fff">
+</section>
+<section>
+  <h2>2 · Stickers</h2>
+  <button id="gen">Generar con vídeo de prueba</button><button id="genv">Generar con un vídeo mío…</button><button id="rev">Ver archivos</button>
+</section>
+<section>
+  <h2>3 · Enviar a mi chat</h2>
+  <button class="p" data-k="static">Estático</button><button class="p" data-k="animated">Animado</button><button class="p" data-k="sound">Con sonido</button><br>
+  <label><input type="checkbox" id="flag"> (A) Si mi cuenta no tiene los stickers con sonido, activarlos solo en esta ventana (no oficial)</label><br>
+  <label><input type="checkbox" id="plain"> (B) Enviar el de sonido sin envoltorio audioStickerMessage (variante de prueba)</label>
+</section>
+<pre id="out">Listo.</pre>
+<script>
+  const out = document.getElementById('out');
+  const show = (x) => { out.textContent = typeof x === 'string' ? x : JSON.stringify(x, null, 2); };
+  const run = (p) => { show('Trabajando…'); p.then(show, (e) => show('Error: ' + e.message)); };
+  document.getElementById('open').onclick = () => run(poc.openWa().then(() => 'Ventana de WhatsApp abierta. Inicia sesión con el QR si te lo pide.'));
+  document.getElementById('st').onclick = () => run(poc.status());
+  document.getElementById('gen').onclick = () => run(poc.generate(false));
+  document.getElementById('genv').onclick = () => run(poc.generate(true));
+  document.getElementById('rev').onclick = () => poc.reveal();
+  const qr = document.getElementById('qr');
+  let timer = null;
+  const poll = () => poc.blStatus().then((s) => {
+    qr.style.display = s.qr ? 'block' : 'none';
+    if (s.qr) qr.src = s.qr;
+    show(s.ready ? 'Dispositivo vinculado conectado: ' + s.chat : { ...s, qr: s.qr ? '(escanéalo arriba)' : null });
+    if (s.ready || s.status === 'desconectado') { clearInterval(timer); timer = null; }
+  });
+  document.getElementById('bl').onclick = () => { poc.blStart().then(() => { if (!timer) timer = setInterval(poll, 1500); poll(); }); };
+  document.getElementById('blst').onclick = () => poll();
+  document.getElementById('blout').onclick = () => run(poc.blLogout());
+  const via = () => document.querySelector('[name=via]:checked').value;
+  for (const b of document.querySelectorAll('[data-k]')) b.onclick = () => run(poc.send({ kind: b.dataset.k, via: via(),
+    allowLocalSoundFlag: document.getElementById('flag').checked, wrapped: !document.getElementById('plain').checked }));
+</script>
+</body>
+</html>
