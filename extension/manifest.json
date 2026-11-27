@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "WhatStick para WhatsApp Web",
+  "version": "1.0.0",
+  "description": "Envía a WhatsApp Web los stickers creados con WhatStick, también los stickers con sonido. Extensión no oficial.",
+  "author": "Dreex",
+  "icons": { "16": "icons/icono-16.png", "32": "icons/icono-32.png", "48": "icons/icono-48.png", "128": "icons/icono-128.png" },
+  "host_permissions": ["https://web.whatsapp.com/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://web.whatsapp.com/*"],
+      "js": ["wa.js", "panel.js"],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    }
+  ]
+}
